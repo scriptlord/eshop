@@ -1,6 +1,117 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import Product from '../models/productModel.js';
 
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+
+  let responseBody = {
+    "data": true,
+    "message": null,
+    "success": true
+  }
+  if (token && token.length > 20) {
+    res.json(responseBody);
+  } else {
+    responseBody.message = []
+    responseBody.message.push('Account verification failed. Try Again')
+    responseBody.success = false
+    responseBody.data = false
+    res.json(responseBody)
+  }
+});
+
+
+const resendLink = asyncHandler(async (req, res) => {
+  let responseBody = {
+    "data": true,
+    "message": null,
+    "success": true
+  }
+  const token = req.query.token;
+  console.log(req.body, 'got to this place')
+  if (token && token.length > 10) {
+    res.json(responseBody);
+  } else {
+    responseBody.message = []
+    responseBody.message.push('Activation email failed to send. Try Again')
+    responseBody.success = false
+    responseBody.data = false
+    res.json(responseBody)
+  }
+});
+// resend-forgot-password-mail
+const resendForgotPasswordMail = asyncHandler(async (req, res) => {
+  let responseBody = {
+    "data": true,
+    "message": null,
+    "success": true
+  }
+  const email = req.query.email;
+  if (email) {
+    res.json(responseBody);
+  } else {
+    responseBody.message = []
+    responseBody.message.push('Resend link failed. Try Again')
+    responseBody.success = false
+    responseBody.data = false
+    res.json(responseBody)
+  }
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  let responseBody = {
+    "data": true,
+    "message": null,
+    "success": true
+  }
+
+  const { Email, Token, NewPassword, ConfirmPassword } = req.body;
+
+  if (Email && Token && NewPassword && ConfirmPassword) {
+
+    // Check if the token is alphanumeric
+    const isAlphanumeric = /^[a-z0-9]+$/i.test(Token);
+
+    if (!isAlphanumeric) {
+      responseBody.message = ['Token is invalid. It must contain only numbers and alphabets.'];
+      responseBody.success = false;
+      responseBody.data = false;
+      res.json(responseBody);
+      return;
+    }
+
+    // Check token length
+    if (Token.length < 20) { // Replace 20 with your required token length
+      responseBody.message = ['Token is invalid. Incorrect length.'];
+      responseBody.success = false;
+      responseBody.data = false;
+      res.json(responseBody);
+      return;
+    }
+    
+    if (NewPassword !== ConfirmPassword) {
+      responseBody.message = ['New password and confirmation password do not match.']
+      responseBody.success = false
+      responseBody.data = false
+      res.json(responseBody);
+      return;
+    }
+
+    // If all checks passed, proceed with password reset
+    res.json(responseBody);
+
+  } else {
+    responseBody.message = ['Missing or invalid data.']
+    responseBody.success = false
+    responseBody.data = false
+    res.json(responseBody)
+  }
+});
+
+
+
+
 // @desc    Fetch all products
 // @route   GET /api/products
 // @access  Public
@@ -56,6 +167,8 @@ const createProduct = asyncHandler(async (req, res) => {
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
 });
+
+
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
@@ -149,7 +262,11 @@ const getTopProducts = asyncHandler(async (req, res) => {
 });
 
 export {
+  resendLink,
+  resetPassword,
+  resendForgotPasswordMail,
   getProducts,
+  verifyEmail,
   getProductById,
   createProduct,
   updateProduct,
